@@ -1,3 +1,5 @@
+# `llvm-sys-featured`
+
 Rust bindings to LLVM's C API.
 
 This is essentially a mirror of [llvm-sys], except that instead of using
@@ -6,7 +8,7 @@ features. Currently, the goal is that with the `llvm-9` feature you get
 exactly `llvm-sys` version 90.1.0, and with the `llvm-10` feature you get
 exactly `llvm-sys` version 100.1.1.
 
-# Usage
+## Usage
 
 Add this crate as a dependency in your `Cargo.toml`, selecting the feature
 corresponding to the LLVM version you want:
@@ -36,7 +38,7 @@ llvm-sys = { package = "llvm-sys-featured", version = "0.1.0", features = ["llvm
 
 [dependency renaming]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#renaming-dependencies-in-cargotoml
 
-# Documentation
+## Documentation
 
 Documentation for this crate's API can be found at
 [docs.rs](https://docs.rs/llvm-sys-featured).
@@ -48,14 +50,14 @@ particularly the [generated API documentation](https://llvm.org/doxygen).
 See the `examples` directory in this repository for API examples; these
 are exactly the same as the examples provided by [llvm-sys].
 
-# Safe bindings
+## Safe bindings
 
 We recommend that most users not use this crate directly, but instead use one
 of the following safe, "Rusty" APIs for LLVM:
   * [llvm-ir](https://crates.io/crates/llvm-ir)
   * [Inkwell](https://github.com/TheDan64/inkwell)
 
-# LLVM compatibility
+## LLVM compatibility
 
 Currently, this crate supports LLVM 9 and LLVM 10.  (See [Usage](#usage).)
 
@@ -75,7 +77,7 @@ feature on this crate, or by setting the environment variable
 enforce that the LLVM version being used exactly matches the one selected via
 Cargo features.
 
-# Downloading LLVM
+## Downloading LLVM
 
 LLVM can be acquired from your system package manager on most systems; but if
 you want a newer version of LLVM, you can download it from the LLVM [Download
@@ -83,14 +85,14 @@ page](https://releases.llvm.org/download.html). On Debian and Ubuntu systems,
 you can also get the latest versions from `apt` by following [these
 instructions](https://apt.llvm.org/).
 
-# Building LLVM
+## Building LLVM
 
 For more information on building LLVM from source, see the LLVM docs or the
 [llvm-sys] README.
 
-# Credits
+## Credits
 
-At least 99% of the code in this crate is taken directly from [`llvm-sys`],
+At least 99% of the code in this crate is taken directly from [llvm-sys],
 so a big thanks to its author Peter Marheine, who deserves all the credit for
 the excellent LLVM bindings.
 
