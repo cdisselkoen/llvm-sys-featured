@@ -1,6 +1,5 @@
 //! Remark diagnostics library.
 use crate::prelude::LLVMBool;
-use cfg_if::cfg_if;
 
 #[repr(C)]
 pub enum LLVMRemarkType {
@@ -110,7 +109,7 @@ extern "C" {
     pub fn LLVMRemarkParserCreateYAML(Buf: *const ::libc::c_void, Size: u64)
         -> LLVMRemarkParserRef;
 
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMRemarkParserCreateBitstream(
         Buf: *const ::libc::c_void,
         Size: u64
@@ -128,15 +127,10 @@ extern "C" {
     pub fn LLVMRemarkParserDispose(Parser: LLVMRemarkParserRef);
 }
 
-cfg_if! {
-    if #[cfg(feature = "llvm-9")] {
-        pub const REMARKS_API_VERSION: u32 = 0;
-    } else if #[cfg(feature = "llvm-10")] {
-        pub const REMARKS_API_VERSION: u32 = 1;
-    } else {
-        std::compile_error!("llvm-sys-featured: Please select an LLVM version using a Cargo feature.");
-    }
-}
+#[cfg(LLVM_VERSION_9_OR_LOWER)]
+pub const REMARKS_API_VERSION: u32 = 0;
+#[cfg(LLVM_VERSION_10_OR_GREATER)]
+pub const REMARKS_API_VERSION: u32 = 1;
 
 extern "C" {
     /// Returns the version of the remarks library.

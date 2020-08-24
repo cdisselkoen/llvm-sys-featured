@@ -114,6 +114,9 @@ pub mod linker;
 pub mod lto;
 pub mod object;
 pub mod orc;
+#[cfg(LLVM_VERSION_8_OR_LOWER)]
+pub mod opt_remarks;
+#[cfg(LLVM_VERSION_9_OR_GREATER)]
 pub mod remarks;
 pub mod support;
 pub mod target;
@@ -139,6 +142,7 @@ pub enum LLVMOpcode {
     LLVMIndirectBr = 4,
     LLVMInvoke = 5,
     LLVMUnreachable = 7,
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     LLVMCallBr = 67,
     LLVMFNeg = 66,
     LLVMAdd = 8,
@@ -189,7 +193,7 @@ pub enum LLVMOpcode {
     LLVMShuffleVector = 52,
     LLVMExtractValue = 53,
     LLVMInsertValue = 54,
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     LLVMFreeze = 68,
     LLVMFence = 55,
     LLVMAtomicCmpXchg = 56,
@@ -433,9 +437,9 @@ pub enum LLVMAtomicRMWBinOp {
     LLVMAtomicRMWBinOpMin = 8,
     LLVMAtomicRMWBinOpUMax = 9,
     LLVMAtomicRMWBinOpUMin = 10,
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     LLVMAtomicRMWBinOpFAdd = 11,
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     LLVMAtomicRMWBinOpFSub = 12,
 }
 

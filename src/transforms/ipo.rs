@@ -5,7 +5,7 @@ use super::super::prelude::*;
 extern "C" {
     pub fn LLVMAddArgumentPromotionPass(PM: LLVMPassManagerRef);
     pub fn LLVMAddConstantMergePass(PM: LLVMPassManagerRef);
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMAddMergeFunctionsPass(PM: LLVMPassManagerRef);
     pub fn LLVMAddCalledValuePropagationPass(PM: LLVMPassManagerRef);
     pub fn LLVMAddDeadArgEliminationPass(PM: LLVMPassManagerRef);
@@ -18,7 +18,7 @@ extern "C" {
     pub fn LLVMAddPruneEHPass(PM: LLVMPassManagerRef);
     pub fn LLVMAddIPSCCPPass(PM: LLVMPassManagerRef);
     pub fn LLVMAddInternalizePass(arg1: LLVMPassManagerRef, AllButMain: ::libc::c_uint);
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMAddInternalizePassWithMustPreservePredicate(
         PM: LLVMPassManagerRef,
         Context: *mut ::libc::c_void,

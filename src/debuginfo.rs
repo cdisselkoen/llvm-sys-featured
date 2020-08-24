@@ -9,9 +9,9 @@ pub const LLVMDIFlagProtected: LLVMDIFlags = 2;
 pub const LLVMDIFlagPublic: LLVMDIFlags = 3;
 pub const LLVMDIFlagFwdDecl: LLVMDIFlags = 1 << 2;
 pub const LLVMDIFlagAppleBlock: LLVMDIFlags = 1 << 3;
-#[cfg(feature = "llvm-9")]
+#[cfg(LLVM_VERSION_9_OR_LOWER)]
 pub const LLVMDIFlagBlockByrefStruct: LLVMDIFlags = 1 << 4;
-#[cfg(feature = "llvm-10")]
+#[cfg(LLVM_VERSION_10_OR_GREATER)]
 pub const LLVMDIFlagReservedBit4: LLVMDIFlags = 1 << 4;
 pub const LLVMDIFlagVirtual: LLVMDIFlags = 1 << 5;
 pub const LLVMDIFlagArtificial: LLVMDIFlags = 1 << 6;
@@ -34,6 +34,9 @@ pub const LLVMDIFlagTypePassByValue: LLVMDIFlags = 1 << 22;
 pub const LLVMDIFlagTypePassByReference: LLVMDIFlags = 1 << 23;
 pub const LLVMDIFlagEnumClass: LLVMDIFlags = 1 << 24;
 pub const LLVMDIFlagThunk: LLVMDIFlags = 1 << 25;
+#[cfg(LLVM_VERSION_8_OR_LOWER)]
+pub const LLVMDIFlagTrivial: LLVMDIFlags = 1 << 26;
+#[cfg(LLVM_VERSION_9_OR_GREATER)]
 pub const LLVMDIFlagNonTrivial: LLVMDIFlags = 1 << 26;
 pub const LLVMDIFlagBigendian: LLVMDIFlags = 1 << 27;
 pub const LLVMDIFlagLittleEndian: LLVMDIFlags = 1 << 28;
@@ -136,12 +139,13 @@ pub enum LLVMMetadataKind {
     LLVMDIImportedEntityMetadataKind,
     LLVMDIMacroMetadataKind,
     LLVMDIMacroFileMetadataKind,
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     LLVMDICommonBlockMetadataKind,
 }
 
 pub type LLVMDWARFTypeEncoding = ::libc::c_uint;
 
-#[cfg(feature = "llvm-10")]
+#[cfg(LLVM_VERSION_10_OR_GREATER)]
 #[repr(C)]
 #[derive(Debug)]
 pub enum LLVMDWARFMacinfoRecordType {
@@ -205,13 +209,13 @@ extern "C" {
         ConfigMacrosLen: ::libc::size_t,
         IncludePath: *const ::libc::c_char,
         IncludePathLen: ::libc::size_t,
-        #[cfg(feature = "llvm-9")]
+        #[cfg(LLVM_VERSION_9_OR_LOWER)]
         ISysRoot: *const ::libc::c_char,
-        #[cfg(feature = "llvm-10")]
+        #[cfg(LLVM_VERSION_10_OR_GREATER)]
         SysRoot: *const ::libc::c_char,
-        #[cfg(feature = "llvm-9")]
+        #[cfg(LLVM_VERSION_9_OR_LOWER)]
         ISysRootLen: ::libc::size_t,
-        #[cfg(feature = "llvm-10")]
+        #[cfg(LLVM_VERSION_10_OR_GREATER)]
         SysRootLen: ::libc::size_t,
     ) -> LLVMMetadataRef;
 
@@ -318,24 +322,29 @@ extern "C" {
     pub fn LLVMDILocationGetScope(Location: LLVMMetadataRef) -> LLVMMetadataRef;
 
     /// Get the "inline at" location associated with this debug location.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDILocationGetInlinedAt(Location: LLVMMetadataRef) -> LLVMMetadataRef;
 
     /// Get the metadata of the file associated with a given scope.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIScopeGetFile(Scope: LLVMMetadataRef) -> LLVMMetadataRef;
 
     /// Get the directory of a given file.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIFileGetDirectory(
         File: LLVMMetadataRef,
         Len: *mut ::libc::c_uint,
     ) -> *const ::libc::c_char;
 
     /// Get the name of a given file.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIFileGetFilename(
         File: LLVMMetadataRef,
         Len: *mut ::libc::c_uint,
     ) -> *const ::libc::c_char;
 
     /// Get the source of a given file.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIFileGetSource(
         File: LLVMMetadataRef,
         Len: *mut ::libc::c_uint,
@@ -357,7 +366,7 @@ extern "C" {
         Flags: LLVMDIFlags,
     ) -> LLVMMetadataRef;
 
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMDIBuilderCreateMacro(
         Builder: LLVMDIBuilderRef,
         ParentMacroFile: LLVMMetadataRef,
@@ -369,7 +378,7 @@ extern "C" {
         ValueLen: usize
     ) -> LLVMMetadataRef;
 
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMDIBuilderCreateTempMacroFile(
         Builder: LLVMDIBuilderRef,
         ParentMacroFile: LLVMMetadataRef,
@@ -378,6 +387,7 @@ extern "C" {
     ) -> LLVMMetadataRef;
 
     /// Create debugging information entry for an enumerator.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIBuilderCreateEnumerator(
         Builder: LLVMDIBuilderRef,
         Name: *const ::libc::c_char,
@@ -588,7 +598,7 @@ extern "C" {
         File: LLVMMetadataRef,
         LineNo: ::libc::c_uint,
         Scope: LLVMMetadataRef,
-        #[cfg(feature = "llvm-10")]
+        #[cfg(LLVM_VERSION_10_OR_GREATER)]
         AlignInBits: u32,
     ) -> LLVMMetadataRef;
 
@@ -743,18 +753,23 @@ extern "C" {
     ) -> LLVMMetadataRef;
 
     /// Retrieves the DIVariable associated with this global variable expression.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIGlobalVariableExpressionGetVariable(GVE: LLVMMetadataRef) -> LLVMMetadataRef;
 
     /// Retrieves the DIExpression associated with this global variable expression.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIGlobalVariableExpressionGetExpression(GVE: LLVMMetadataRef) -> LLVMMetadataRef;
 
     ///Get the metadata of the file associated with a given variable.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIVariableGetFile(Var: LLVMMetadataRef) -> LLVMMetadataRef;
 
     /// Get the metadata of the scope associated with a given variable.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIVariableGetScope(Var: LLVMMetadataRef) -> LLVMMetadataRef;
 
     /// Get the source line where this \c DIVariable is declared.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDIVariableGetLine(Var: LLVMMetadataRef) -> ::libc::c_uint;
 
     /// Create a new temporary \c MDNode.  Suitable for use in constructing cyclic
@@ -864,12 +879,15 @@ extern "C" {
     pub fn LLVMSetSubprogram(Func: LLVMValueRef, SP: LLVMMetadataRef);
 
     /// Get the line associated with a given subprogram.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDISubprogramGetLine(Subprogram: LLVMMetadataRef) -> ::libc::c_uint;
 
     /// Get the debug location for the given instruction.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMInstructionGetDebugLoc(Inst: LLVMValueRef) -> LLVMMetadataRef;
 
     /// Set the debug location for the given instruction.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMInstructionSetDebugLoc(Inst: LLVMValueRef, Loc: LLVMMetadataRef);
 
     /// Obtain the enumerated type of a metadata instance.

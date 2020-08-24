@@ -5,5 +5,6 @@ extern "C" {
 
     pub fn LLVMAddPromoteMemoryToRegisterPass(PM: LLVMPassManagerRef);
 
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMAddAddDiscriminatorsPass(PM: LLVMPassManagerRef);
 }

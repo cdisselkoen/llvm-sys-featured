@@ -1,12 +1,13 @@
-# `llvm-sys-featured`
+# llvm-sys-featured
 
 Rust bindings to LLVM's C API.
 
 This is essentially a mirror of [llvm-sys], except that instead of using
 separate crates.io releases for each LLVM version, this crate uses Cargo
-features. Currently, the goal is that with the `llvm-9` feature you get
-exactly `llvm-sys` version 90.1.0, and with the `llvm-10` feature you get
-exactly `llvm-sys` version 100.1.1.
+features. Currently, the goal is that with the `llvm-8` feature you get
+exactly `llvm-sys` version 80.2.0, with the `llvm-9` feature you get exactly
+`llvm-sys` version 90.1.0, and with the `llvm-10` feature you get exactly
+`llvm-sys` version 100.1.1.
 
 ## Usage
 
@@ -18,7 +19,7 @@ corresponding to the LLVM version you want:
 llvm-sys-featured = { version = "0.1.0", features = ["llvm-10"] }
 ```
 
-Currently, the supported LLVM versions are `llvm-9` and `llvm-10`.
+Currently, the supported LLVM versions are `llvm-8`, `llvm-9`, and `llvm-10`.
 
 There must be the corresponding LLVM version available on your system.
 By default, `llvm-sys-featured` will look for `llvm-config` on `PATH` to find
@@ -59,7 +60,8 @@ of the following safe, "Rusty" APIs for LLVM:
 
 ## LLVM compatibility
 
-Currently, this crate supports LLVM 9 and LLVM 10.  (See [Usage](#usage).)
+Currently, this crate supports LLVM 8, LLVM 9, and LLVM 10. (See
+[Usage](#usage).)
 
 Like [llvm-sys], this crate checks that the LLVM version being used matches the
 one selected via Cargo features (or crate version in `llvm-sys`'s case).

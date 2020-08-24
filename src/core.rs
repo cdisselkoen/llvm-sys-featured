@@ -743,6 +743,7 @@ extern "C" {
     /// Added in LLVM 3.7.
     pub fn LLVMSetPersonalityFn(Fn: LLVMValueRef, PersonalityFn: LLVMValueRef);
     /// Obtain the intrinsic ID number which matches the given function name.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMLookupIntrinsicID(
         Name: *const ::libc::c_char,
         NameLen: ::libc::size_t,
@@ -825,24 +826,25 @@ extern "C" {
 
 // Core->Metadata
 extern "C" {
-    #[deprecated(since = "LLVM 9.0", note = "Use LLVMMDStringInContext2 instead.")]
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0", note = "Use LLVMMDStringInContext2 instead."))]
     pub fn LLVMMDStringInContext(
         C: LLVMContextRef,
         Str: *const ::libc::c_char,
         SLen: ::libc::c_uint,
     ) -> LLVMValueRef;
-    #[deprecated(since = "LLVM 9.0", note = "Use LLVMMDStringInContext2 instead.")]
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0", note = "Use LLVMMDStringInContext2 instead."))]
     pub fn LLVMMDString(Str: *const ::libc::c_char, SLen: ::libc::c_uint) -> LLVMValueRef;
-    #[deprecated(since = "LLVM 9.0", note = "Use LLVMMDNodeInContext2 instead.")]
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0", note = "Use LLVMMDNodeInContext2 instead."))]
     pub fn LLVMMDNodeInContext(
         C: LLVMContextRef,
         Vals: *mut LLVMValueRef,
         Count: ::libc::c_uint,
     ) -> LLVMValueRef;
-    #[deprecated(since = "LLVM 9.0", note = "Use LLVMMDNodeInContext2 instead.")]
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0", note = "Use LLVMMDNodeInContext2 instead."))]
     pub fn LLVMMDNode(Vals: *mut LLVMValueRef, Count: ::libc::c_uint) -> LLVMValueRef;
 
     /// Add a global indirect function to a module under a specified name.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMAddGlobalIFunc(
         M: LLVMModuleRef,
         Name: *const ::libc::c_char,
@@ -853,6 +855,7 @@ extern "C" {
     ) -> LLVMValueRef;
 
     /// Obtain a GlobalIFunc value from a Module by its name.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMGetNamedGlobalIFunc(
         M: LLVMModuleRef,
         Name: *const ::libc::c_char,
@@ -860,31 +863,40 @@ extern "C" {
     ) -> LLVMValueRef;
 
     /// Obtain an iterator to the first GlobalIFunc in a Module.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMGetFirstGlobalIFunc(M: LLVMModuleRef) -> LLVMValueRef;
 
     /// Obtain an iterator to the last GlobalIFunc in a Module.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMGetLastGlobalIFunc(M: LLVMModuleRef) -> LLVMValueRef;
 
     /// Advance a GlobalIFunc iterator to the next GlobalIFunc.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMGetNextGlobalIFunc(IFunc: LLVMValueRef) -> LLVMValueRef;
 
     /// Decrement a GlobalIFunc iterator to the previous GlobalIFunc.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMGetPreviousGlobalIFunc(IFunc: LLVMValueRef) -> LLVMValueRef;
 
     /// Retrieves the resolver function associated with this indirect function, or
     /// NULL if it doesn't not exist.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMGetGlobalIFuncResolver(IFunc: LLVMValueRef) -> LLVMValueRef;
 
     /// Sets the resolver function associated with this indirect function.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMSetGlobalIFuncResolver(IFunc: LLVMValueRef, Resolver: LLVMValueRef);
 
     /// Remove a global indirect function from its parent module and delete it.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMEraseGlobalIFunc(IFunc: LLVMValueRef);
 
     /// Remove a global indirect function from its parent module.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMRemoveGlobalIFunc(IFunc: LLVMValueRef);
 
     /// Create an MDString value from a given string value.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMMDStringInContext2(
         C: LLVMContextRef,
         Str: *const ::libc::c_char,
@@ -892,6 +904,7 @@ extern "C" {
     ) -> LLVMMetadataRef;
 
     /// Create an MDNode value with the given array of operands.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMMDNodeInContext2(
         C: LLVMContextRef,
         MDs: *mut LLVMMetadataRef,
@@ -927,11 +940,13 @@ extern "C" {
     pub fn LLVMGetPreviousBasicBlock(BB: LLVMBasicBlockRef) -> LLVMBasicBlockRef;
     pub fn LLVMGetEntryBasicBlock(Fn: LLVMValueRef) -> LLVMBasicBlockRef;
     /// Insert the given basic block after the insertion point of the given builder.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMInsertExistingBasicBlockAfterInsertBlock(
         Builder: LLVMBuilderRef,
         BB: LLVMBasicBlockRef,
     );
     /// Append the given basic block to the basic block list of the given function.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMAppendExistingBasicBlock(Fn: LLVMValueRef, BB: LLVMBasicBlockRef);
     pub fn LLVMCreateBasicBlockInContext(
         C: LLVMContextRef,
@@ -1106,7 +1121,7 @@ extern "C" {
     pub fn LLVMIsAGlobalVariable(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsAUndefValue(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsAInstruction(Val: LLVMValueRef) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMIsAUnaryOperator(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsABinaryOperator(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsACallInst(Val: LLVMValueRef) -> LLVMValueRef;
@@ -1140,9 +1155,9 @@ extern "C" {
     pub fn LLVMIsAResumeInst(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsACleanupReturnInst(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsACatchReturnInst(Val: LLVMValueRef) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMIsACatchSwitchInst(Val: LLVMValueRef) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMIsACallBrInst(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsAFuncletPadInst(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsACatchPadInst(Val: LLVMValueRef) -> LLVMValueRef;
@@ -1166,13 +1181,13 @@ extern "C" {
     pub fn LLVMIsAExtractValueInst(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsALoadInst(Val: LLVMValueRef) -> LLVMValueRef;
     pub fn LLVMIsAVAArgInst(Val: LLVMValueRef) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMIsAFreezeInst(Val: LLVMValueRef) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMIsAAtomicCmpXchgInst(Val: LLVMValueRef) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMIsAAtomicRMWInst(Val: LLVMValueRef) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMIsAFenceInst(Val: LLVMValueRef) -> LLVMValueRef;
 }
 
@@ -1206,20 +1221,27 @@ extern "C" {
 
     // Metadata
     /// Get location information used by debugging information.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMGetCurrentDebugLocation2(Builder: LLVMBuilderRef) -> LLVMMetadataRef;
     /// Set location information used by debugging information.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMSetCurrentDebugLocation2(Builder: LLVMBuilderRef, Loc: LLVMMetadataRef);
     /// Attempts to set the debug location for the given instruction using the
     /// current debug location for the given builder.  If the builder has no current
     /// debug location, this function is a no-op.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMSetInstDebugLocation(Builder: LLVMBuilderRef, Inst: LLVMValueRef);
     /// Get the dafult floating-point math metadata for a given builder.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMBuilderGetDefaultFPMathTag(Builder: LLVMBuilderRef) -> LLVMMetadataRef;
     /// Set the default floating-point math metadata for the given builder.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMBuilderSetDefaultFPMathTag(Builder: LLVMBuilderRef, FPMathTag: LLVMMetadataRef);
-    #[deprecated(since = "LLVM 9.0", note = "Use LLVMGetCurrentDebugLocation2 instead.")]
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0", note = "Use LLVMGetCurrentDebugLocation2 instead."))]
     pub fn LLVMSetCurrentDebugLocation(Builder: LLVMBuilderRef, L: LLVMValueRef);
     pub fn LLVMGetCurrentDebugLocation(Builder: LLVMBuilderRef) -> LLVMValueRef;
+    #[cfg(LLVM_VERSION_8_OR_LOWER)]
+    pub fn LLVMSetInstDebugLocation(Builder: LLVMBuilderRef, Inst: LLVMValueRef);
 
     // Terminators
     pub fn LLVMBuildRetVoid(arg1: LLVMBuilderRef) -> LLVMValueRef;
@@ -1664,15 +1686,15 @@ extern "C" {
     ) -> LLVMValueRef;
     pub fn LLVMGetVolatile(MemoryAccessInst: LLVMValueRef) -> LLVMBool;
     pub fn LLVMSetVolatile(MemoryAccessInst: LLVMValueRef, IsVolatile: LLVMBool);
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMGetWeak(CmpXchgInst: LLVMValueRef) -> LLVMBool;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMSetWeak(CmpXchgInst: LLVMValueRef, IsWeak: LLVMBool);
     pub fn LLVMGetOrdering(MemoryAccessInst: LLVMValueRef) -> LLVMAtomicOrdering;
     pub fn LLVMSetOrdering(MemoryAccessInst: LLVMValueRef, Ordering: LLVMAtomicOrdering);
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMGetAtomicRMWBinOp(AtomicRMWInst: LLVMValueRef) -> LLVMAtomicRMWBinOp;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMSetAtomicRMWBinOp(AtomicRMWInst: LLVMValueRef, BinOp: LLVMAtomicRMWBinOp);
 
     // Casts
@@ -1888,7 +1910,7 @@ extern "C" {
         Index: ::libc::c_uint,
         Name: *const ::libc::c_char,
     ) -> LLVMValueRef;
-    #[cfg(feature = "llvm-10")]
+    #[cfg(LLVM_VERSION_10_OR_GREATER)]
     pub fn LLVMBuildFreeze(
         arg1: LLVMBuilderRef,
         Val: LLVMValueRef,

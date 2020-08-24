@@ -1,14 +1,10 @@
-use lazy_static::lazy_static;
 use regex::Regex;
 use semver::Version;
 use std::env;
 use std::ffi::OsStr;
 use std::io::{self, ErrorKind};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
-
-#[cfg(all(feature = "llvm-9", feature = "llvm-10"))]
-std::compile_error!("llvm-sys-featured: Multiple LLVM versions selected. Please activate only one LLVM version feature.");
 
 // Environment variables that can guide compilation
 
@@ -27,94 +23,83 @@ static ENV_USE_DEBUG_MSVCRT: &str = "LLVM_SYS_FEATURED_USE_DEBUG_MSVCRT";
 /// If set, always link against libffi
 static ENV_FORCE_FFI: &str = "LLVM_SYS_FEATURED_FFI_WORKAROUND";
 
-lazy_static! {
-    static ref SELECTED_VERSION: Version = {
-        if cfg!(feature = "llvm-10") {
-            Version::parse("10.0.0").unwrap()
-        } else if cfg!(feature = "llvm-9") {
-            Version::parse("9.0.0").unwrap()
-        } else {
-            panic!("llvm-sys-featured: Please select an LLVM version using a Cargo feature.")
-        }
-    };
+/// Filesystem path to an llvm-config binary for the specified
+/// (user-selected) LLVM version; or `None` if we failed to find an
+/// appropriate binary.
+fn get_llvm_config_path(selected_version: &Version) -> Option<PathBuf> {
+    let llvm_config_binary_names: Vec<String> = vec![
+        "llvm-config".into(),
+        format!("llvm-config-{}", selected_version.major),
+        format!("llvm-config-{}.{}", selected_version.major, selected_version.minor),
+        format!("llvm-config{}{}", selected_version.major, selected_version.minor),
+    ];
 
-    static ref LLVM_CONFIG_BINARY_NAMES: Vec<String> = {
-        vec![
-            "llvm-config".into(),
-            format!("llvm-config-{}", SELECTED_VERSION.major),
-            format!("llvm-config-{}.{}", SELECTED_VERSION.major, SELECTED_VERSION.minor),
-            format!("llvm-config{}{}", SELECTED_VERSION.major, SELECTED_VERSION.minor),
-        ]
-    };
+    // Did the user give us a binary path to use?
+    if let Some(path) = env::var_os(ENV_LLVM_PREFIX) {
+        // User gave us a path: try to use that, and fail if it doesn't work.
+        for binary_name in llvm_config_binary_names.iter() {
+            let mut pb: PathBuf = path.clone().into();
+            pb.push("bin");
+            pb.push(binary_name);
 
-    /// Filesystem path to an llvm-config binary for the correct version.
-    static ref LLVM_CONFIG_PATH: Option<PathBuf> = {
-        // Did the user give us a binary path to use?
-        if let Some(path) = env::var_os(ENV_LLVM_PREFIX) {
-            // User gave us a path: try to use that, and fail if it doesn't work.
-            for binary_name in LLVM_CONFIG_BINARY_NAMES.iter() {
-                let mut pb: PathBuf = path.clone().into();
-                pb.push("bin");
-                pb.push(binary_name);
-
-                let ver = llvm_version(&pb)
-                    .unwrap_or_else(|_| panic!("Failed to execute {:?}", &pb));
-                if is_compatible_llvm(&ver) {
-                    return Some(pb);
-                } else {
-                    println!("LLVM binaries specified by {} are the wrong version.
-                              (Found {}, need {}.)", ENV_LLVM_PREFIX, ver, *SELECTED_VERSION);
-                }
+            let version = llvm_version(&pb)
+                .unwrap_or_else(|_| panic!("Failed to execute {:?}", &pb));
+            if is_compatible_llvm(&version, selected_version) {
+                return Some(pb);
+            } else {
+                println!("LLVM binaries specified by {} are the wrong version.
+                            (Found {}, need {}.)", ENV_LLVM_PREFIX, version, selected_version);
             }
-            None
-        } else {
-            // User didn't give us a path: try to find llvm-config via system PATH.
-            for binary_name in LLVM_CONFIG_BINARY_NAMES.iter() {
-                match llvm_version(binary_name) {
-                    Ok(ref version) if is_compatible_llvm(version) => {
-                        // Compatible version found. Nice.
-                        return Some(binary_name.into());
-                    }
-                    Ok(version) => {
-                        // Version mismatch. Will try further searches, but warn that
-                        // we're not using the system one.
-                        println!(
-                            "Found LLVM version {} on PATH, but need {}.",
-                            version, *SELECTED_VERSION
-                        );
-                    }
-                    Err(ref e) if e.kind() == ErrorKind::NotFound => {
-                        // Looks like we failed to execute any llvm-config. Keep
-                        // searching.
-                    }
-                    // Some other error, probably a weird failure. Give up.
-                    Err(e) => panic!("Failed to search PATH for llvm-config: {}", e),
-                }
-            }
-            println!("Didn't find usable system-wide LLVM.");
-            None
         }
-    };
+        None
+    } else {
+        // User didn't give us a path: try to find llvm-config via system PATH.
+        for binary_name in llvm_config_binary_names.iter() {
+            match llvm_version(binary_name) {
+                Ok(ref version) if is_compatible_llvm(version, selected_version) => {
+                    // Compatible version found. Nice.
+                    return Some(binary_name.into());
+                }
+                Ok(version) => {
+                    // Version mismatch. Will try further searches, but warn that
+                    // we're not using the system one.
+                    println!(
+                        "Found LLVM version {} on PATH, but need {}.",
+                        version, selected_version
+                    );
+                }
+                Err(ref e) if e.kind() == ErrorKind::NotFound => {
+                    // Looks like we failed to execute any llvm-config. Keep
+                    // searching.
+                }
+                // Some other error, probably a weird failure. Give up.
+                Err(e) => panic!("Failed to search PATH for llvm-config: {}", e),
+            }
+        }
+        println!("Didn't find usable system-wide LLVM.");
+        None
+    }
 }
 
 /// Check whether the given LLVM version is compatible with the one selected via
 /// Cargo features.
-fn is_compatible_llvm(llvm_version: &Version) -> bool {
+fn is_compatible_llvm(llvm_version: &Version, selected_version: &Version) -> bool {
     let strict =
         cfg!(feature = "strict-versioning") || env::var_os(ENV_STRICT_VERSIONING).is_some();
     if strict {
-        llvm_version == &*SELECTED_VERSION
+        // we still don't require that patch versions (the third digit) match --
+        // it doesn't matter 9.0.0 vs 9.0.1 for our purposes, and we don't even
+        // allow the user to specify a target LLVM version at that granularity
+        llvm_version.major == selected_version.major
+            && llvm_version.minor == selected_version.minor
     } else {
-        llvm_version >= &*SELECTED_VERSION
+        llvm_version >= selected_version
     }
 }
 
 /// Get the output from running `llvm-config` with the given argument.
-///
-/// Lazily searches for or compiles LLVM as configured by the environment
-/// variables.
-fn llvm_config(arg: &str) -> String {
-    llvm_config_ex(&*LLVM_CONFIG_PATH.clone().unwrap(), arg)
+fn llvm_config(llvm_config_path: &Path, arg: &str) -> String {
+    llvm_config_ex(llvm_config_path, arg)
         .expect("Surprising failure from llvm-config")
 }
 
@@ -155,8 +140,8 @@ fn llvm_version(binary: impl AsRef<OsStr>) -> io::Result<Version> {
 
 /// Get the names of the dylibs required by LLVM, including the C++ standard
 /// library.
-fn get_system_libraries() -> Vec<String> {
-    llvm_config("--system-libs")
+fn get_system_libraries(llvm_config_path: &Path) -> Vec<String> {
+    llvm_config(llvm_config_path, "--system-libs")
         .split(&[' ', '\n'] as &[char])
         .filter(|s| !s.is_empty())
         .map(|flag| {
@@ -207,11 +192,11 @@ fn get_system_libcpp() -> Option<&'static str> {
 }
 
 /// Get the names of libraries to link against.
-fn get_link_libraries() -> Vec<String> {
+fn get_link_libraries(llvm_config_path: &Path) -> Vec<String> {
     // Using --libnames in conjunction with --libdir is particularly important
     // for MSVC when LLVM is in a path with spaces, but it is generally less of
     // a hack than parsing linker flags output from --libs and --ldflags.
-    llvm_config("--libnames")
+    llvm_config(llvm_config_path, "--libnames")
         .split(&[' ', '\n'] as &[char])
         .filter(|s| !s.is_empty())
         .map(|name| {
@@ -231,8 +216,8 @@ fn get_link_libraries() -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
-fn get_llvm_cflags() -> String {
-    let output = llvm_config("--cflags");
+fn get_llvm_cflags(llvm_config_path: &Path) -> String {
+    let output = llvm_config(llvm_config_path, "--cflags");
 
     // llvm-config includes cflags from its own compilation with --cflags that
     // may not be relevant to us. In particularly annoying cases, these might
@@ -247,19 +232,38 @@ fn get_llvm_cflags() -> String {
         return output;
     }
 
-    llvm_config("--cflags")
+    llvm_config(llvm_config_path, "--cflags")
         .split(&[' ', '\n'][..])
         .filter(|word| !word.starts_with("-W"))
         .collect::<Vec<_>>()
         .join(" ")
 }
 
-fn is_llvm_debug() -> bool {
+fn is_llvm_debug(llvm_config_path: &Path) -> bool {
     // Has to be either Debug or Release
-    llvm_config("--build-mode").contains("Debug")
+    llvm_config(llvm_config_path, "--build-mode").contains("Debug")
 }
 
 fn main() {
+    // First ensure that we have exactly one LLVM version selected
+    let mut versions = vec![];
+    if cfg!(feature = "llvm-8") {
+        versions.push(Version::parse("8.0.0").unwrap())
+    }
+    if cfg!(feature = "llvm-9") {
+        versions.push(Version::parse("9.0.0").unwrap());
+    }
+    if cfg!(feature = "llvm-10") {
+        versions.push(Version::parse("10.0.0").unwrap());
+    }
+    let selected_version = if versions.len() == 0 {
+        panic!("llvm-sys-featured: Please select an LLVM version using a Cargo feature.")
+    } else if versions.len() > 1 {
+        panic!("llvm-sys-featured: Multiple LLVM versions selected. Please activate only one LLVM version feature.");
+    } else {
+        &versions[0]
+    };
+
     // Behavior can be significantly affected by these vars.
     println!("cargo:rerun-if-env-changed={}", &*ENV_LLVM_PREFIX);
     println!("cargo:rerun-if-env-changed={}", &*ENV_STRICT_VERSIONING);
@@ -267,14 +271,36 @@ fn main() {
     println!("cargo:rerun-if-env-changed={}", &*ENV_USE_DEBUG_MSVCRT);
     println!("cargo:rerun-if-env-changed={}", &*ENV_FORCE_FFI);
 
-    if LLVM_CONFIG_PATH.is_none() {
-        println!("cargo:rustc-cfg=LLVM_SYS_NOT_FOUND");
-        return;
+    let llvm_config_path = match get_llvm_config_path(selected_version) {
+        Some(path) => path,
+        None => {
+            println!("cargo:rustc-cfg=LLVM_SYS_NOT_FOUND");
+            return;
+        },
+    };
+
+    // For convenience we set a number of configuration options to avoid
+    // checking complex combinations of features all the time.
+    // Is the LLVM version at least 9
+    if selected_version.major >= 9 {
+        println!("cargo:rustc-cfg=LLVM_VERSION_9_OR_GREATER");
+    }
+    // Is the LLVM version at least 10
+    if selected_version.major >= 10 {
+        println!("cargo:rustc-cfg=LLVM_VERSION_10_OR_GREATER");
+    }
+    // Is the LLVM version at most 9
+    if selected_version.major <= 9 {
+        println!("cargo:rustc-cfg=LLVM_VERSION_9_OR_LOWER");
+    }
+    // Is the LLVM version at most 8
+    if selected_version.major <= 8 {
+        println!("cargo:rustc-cfg=LLVM_VERSION_8_OR_LOWER");
     }
 
     // Build the extra wrapper functions.
     if !cfg!(feature = "disable-alltargets-init") {
-        std::env::set_var("CFLAGS", get_llvm_cflags());
+        std::env::set_var("CFLAGS", get_llvm_cflags(&llvm_config_path));
         cc::Build::new()
             .file("wrappers/target.c")
             .compile("targetwrappers");
@@ -284,28 +310,28 @@ fn main() {
         return;
     }
 
-    let libdir = llvm_config("--libdir");
+    let libdir = llvm_config(&llvm_config_path, "--libdir");
 
     // Export information to other crates
     println!(
         "cargo:config_path={}",
-        LLVM_CONFIG_PATH.clone().unwrap().display()
+        llvm_config_path.display()
     ); // will be DEP_LLVM_CONFIG_PATH
     println!("cargo:libdir={}", libdir); // DEP_LLVM_LIBDIR
 
     // Link LLVM libraries
     println!("cargo:rustc-link-search=native={}", libdir);
-    for name in get_link_libraries() {
+    for name in get_link_libraries(&llvm_config_path) {
         println!("cargo:rustc-link-lib=static={}", name);
     }
 
     // Link system libraries
-    for name in get_system_libraries() {
+    for name in get_system_libraries(&llvm_config_path) {
         println!("cargo:rustc-link-lib=dylib={}", name);
     }
 
     let use_debug_msvcrt = env::var_os(&*ENV_USE_DEBUG_MSVCRT).is_some();
-    if cfg!(target_env = "msvc") && (use_debug_msvcrt || is_llvm_debug()) {
+    if cfg!(target_env = "msvc") && (use_debug_msvcrt || is_llvm_debug(&llvm_config_path)) {
         println!("cargo:rustc-link-lib={}", "msvcrtd");
     }
 

@@ -17,11 +17,14 @@ pub enum LLVMOpaqueRelocationIterator {}
 
 pub type LLVMRelocationIteratorRef = *mut LLVMOpaqueRelocationIterator;
 
+#[cfg(LLVM_VERSION_9_OR_GREATER)]
 #[derive(Debug)]
 pub enum LLVMOpaqueBinary {}
 
+#[cfg(LLVM_VERSION_9_OR_GREATER)]
 pub type LLVMBinaryRef = *mut LLVMOpaqueBinary;
 
+#[cfg(LLVM_VERSION_9_OR_GREATER)]
 #[repr(C)]
 #[derive(Debug)]
 pub enum LLVMBinaryType {
@@ -57,25 +60,30 @@ pub enum LLVMBinaryType {
     LLVMBinaryTypeWasm,
 }
 
-#[deprecated(since = "LLVM 9.0")]
+#[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0"))]
 pub enum LLVMOpaqueObjectFile {}
 
 #[allow(deprecated)]
-#[deprecated(since = "LLVM 9.0")]
+#[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0"))]
 pub type LLVMObjectFileRef = *mut LLVMOpaqueObjectFile;
 
 extern "C" {
     /// Create a binary file from the given memory buffer.
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMCreateBinary(
         MemBuf: LLVMMemoryBufferRef,
         Context: LLVMContextRef,
         ErrorMessage: *mut *mut ::libc::c_char,
     ) -> LLVMBinaryRef;
     /// Dispose of a binary file
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDisposeBinary(BR: LLVMBinaryRef);
 
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMBinaryCopyMemoryBuffer(BR: LLVMBinaryRef) -> LLVMMemoryBufferRef;
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMBinaryGetType(BR: LLVMBinaryRef) -> LLVMBinaryType;
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMMachOUniversalBinaryCopyObjectForArch(
         BR: LLVMBinaryRef,
         Arch: *const ::libc::c_char,
@@ -83,16 +91,25 @@ extern "C" {
         ErrorMessage: *mut *mut ::libc::c_char,
     ) -> LLVMBinaryRef;
 
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMObjectFileCopySectionIterator(BR: LLVMBinaryRef) -> LLVMSectionIteratorRef;
     pub fn LLVMObjectFileIsSectionIteratorAtEnd(
+        #[cfg(LLVM_VERSION_8_OR_LOWER)]
+        ObjectFile: LLVMObjectFileRef,
+        #[cfg(LLVM_VERSION_9_OR_GREATER)]
         BR: LLVMBinaryRef,
         SI: LLVMSectionIteratorRef,
     ) -> LLVMBool;
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMObjectFileCopySymbolIterator(BR: LLVMBinaryRef) -> LLVMSymbolIteratorRef;
     pub fn LLVMObjectFileIsSymbolIteratorAtEnd(
+        #[cfg(LLVM_VERSION_8_OR_LOWER)]
+        ObjectFile: LLVMObjectFileRef,
+        #[cfg(LLVM_VERSION_9_OR_GREATER)]
         BR: LLVMBinaryRef,
         SI: LLVMSymbolIteratorRef,
     ) -> LLVMBool;
+    #[cfg(LLVM_VERSION_9_OR_GREATER)]
     pub fn LLVMDisposeSectionIterator(SI: LLVMSectionIteratorRef);
 
     pub fn LLVMMoveToNextSection(SI: LLVMSectionIteratorRef);
@@ -124,37 +141,37 @@ extern "C" {
     pub fn LLVMGetRelocationValueString(RI: LLVMRelocationIteratorRef) -> *const ::libc::c_char;
 
     #[allow(deprecated)]
-    #[deprecated(since = "LLVM 9.0", note = "Use LLVMCreateBinary instead")]
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0", note = "Use LLVMCreateBinary instead"))]
     pub fn LLVMCreateObjectFile(MemBuf: LLVMMemoryBufferRef) -> LLVMObjectFileRef;
     #[allow(deprecated)]
-    #[deprecated(since = "LLVM 9.0", note = "Use LLVMDisposeBinary instead")]
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(since = "LLVM 9.0", note = "Use LLVMDisposeBinary instead"))]
     pub fn LLVMDisposeObjectFile(ObjectFile: LLVMObjectFileRef);
     #[allow(deprecated)]
-    #[deprecated(
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(
         since = "LLVM 9.0",
         note = "Use LLVMObjectFileCopySectionIterator instead"
-    )]
+    ))]
     pub fn LLVMGetSections(ObjectFile: LLVMObjectFileRef) -> LLVMSectionIteratorRef;
     #[allow(deprecated)]
-    #[deprecated(
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(
         since = "LLVM 9.0",
         note = "Use LLVMObjectFileIsSectionIteratorAtEnd instead"
-    )]
+    ))]
     pub fn LLVMIsSectionIteratorAtEnd(
         ObjectFile: LLVMObjectFileRef,
         SI: LLVMSectionIteratorRef,
     ) -> LLVMBool;
     #[allow(deprecated)]
-    #[deprecated(
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(
         since = "LLVM 9.0",
         note = "Use LLVMObjectFileCopySymbolIterator instead"
-    )]
+    ))]
     pub fn LLVMGetSymbols(ObjectFile: LLVMObjectFileRef) -> LLVMSymbolIteratorRef;
     #[allow(deprecated)]
-    #[deprecated(
+    #[cfg_attr(LLVM_VERSION_9_OR_GREATER, deprecated(
         since = "LLVM 9.0",
         note = "Use LLVMObjectFileIsSymbolIteratorAtEnd instead"
-    )]
+    ))]
     pub fn LLVMIsSymbolIteratorAtEnd(
         ObjectFile: LLVMObjectFileRef,
         SI: LLVMSymbolIteratorRef,
