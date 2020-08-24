@@ -1,0 +1,48 @@
+[package]
+name = "llvm-sys-featured"
+version = "0.1.0"
+authors = ["Craig Disselkoen <craigdissel@gmail.com>"]
+edition = "2018"
+license = "MIT"
+keywords = ["bindings", "llvm"]
+categories = ["external-ffi-bindings"]
+links = "llvm"
+description = "Bindings to LLVM's C API"
+repository = "https://github.com/cdisselkoen/llvm-sys-featured"
+documentation = "https://docs.rs/llvm-sys-featured"
+readme = "README.md"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cfg-if = "0.1"
+libc = "0.2"
+
+[build-dependencies]
+cc = "1.0"
+lazy_static = "1.0"
+regex = "1.0"
+semver = "0.10"
+
+[features]
+# You _must_ enable exactly one of the following features
+llvm-9 = []
+llvm-10 = []
+
+# Require an exact match between the LLVM version being used and the one
+# selected with the above features; see the README for more details
+strict-versioning = []
+
+# Do not attempt to link against LLVM libraries (useful if a different crate in
+# your dependency tree provides them instead).
+no-llvm-linking = []
+
+# Do not attempt to build the LLVM_InitializeAllTarget* functions.
+# Useful if the build host doesn't have a copy of LLVM to compile/link against
+# and you do not use any of those functions.
+disable-alltargets-init = []
+
+[package.metadata.docs.rs]
+# Generate docs.rs documentation with the llvm-10 feature
+features = ["llvm-10"]
