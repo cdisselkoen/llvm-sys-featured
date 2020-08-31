@@ -68,7 +68,7 @@ corresponding to the LLVM version you want:
 
 ```toml
 [dependencies]
-llvm-sys-featured = { version = "0.1.0", features = ["llvm-10"] }
+llvm-sys-featured = { version = "0.1.1", features = ["llvm-10"] }
 ```
 
 Currently, the supported LLVM versions are `llvm-8`, `llvm-9`, and `llvm-10`.
@@ -86,7 +86,7 @@ If you want to use `llvm-sys-featured` as a drop-in replacement for
 
 ```toml
 [dependencies]
-llvm-sys = { package = "llvm-sys-featured", version = "0.1.0", features = ["llvm-10"] }
+llvm-sys = { package = "llvm-sys-featured", version = "0.1.1", features = ["llvm-10"] }
 ```
 
 [dependency renaming]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#renaming-dependencies-in-cargotoml
