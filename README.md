@@ -1,3 +1,55 @@
+# This crate is now deprecated
+
+Originally, this crate was created as one solution to the problem of
+using Cargo features to select an LLVM version for use with `llvm-sys`,
+which wasn't possible at the time.
+
+Since then, thanks to changes in `llvm-sys` (see
+[this `llvm-sys` GitLab issue](https://gitlab.com/taricorp/llvm-sys.rs/-/issues/8)),
+it is now possible to achieve the same goal much more simply, using
+Cargo's [dependency renaming] feature.
+For instance, as of this writing, [`llvm-ir`] uses the following in its
+Cargo.toml:
+```toml
+[dependencies]
+llvm-sys-80 = { package = "llvm-sys", version = "80.3.0", optional = true }
+llvm-sys-90 = { package = "llvm-sys", version = "90.2.0", optional = true }
+llvm-sys-100 = { package = "llvm-sys", version = "100.2.0", optional = true }
+
+[features]
+# Select the LLVM version to be compatible with.
+# You _must_ enable exactly one of the following features.
+llvm-8 = ["llvm-sys-80"]
+llvm-9 = ["llvm-sys-90"]
+llvm-10 = ["llvm-sys-100"]
+```
+and checks in its `build.rs` script that exactly one of those features was
+enabled.
+
+Then, in its actual library code, `llvm-ir` uses the following:
+```rust
+#[cfg(feature = "llvm-8")]
+pub use llvm_sys_80 as llvm_sys;
+#[cfg(feature = "llvm-9")]
+pub use llvm_sys_90 as llvm_sys;
+#[cfg(feature = "llvm-10")]
+pub use llvm_sys_100 as llvm_sys;
+```
+which declares `llvm-sys` to represent the appropriate version of the
+dependency.
+
+Since this is now possible with `llvm-sys`, there is no more need for the
+alternative solution represented by `llvm-sys-featured`.
+This crate is now deprecated in favor of using `llvm-sys` directly, and will
+not be maintained or updated for future LLVM releases.
+
+[dependency renaming]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#renaming-dependencies-in-cargotoml
+[`llvm-ir`]: https://crates.io/crates/llvm-ir
+
+The original README for `llvm-sys-featured` follows.
+
+-----
+
 # llvm-sys-featured
 
 Rust bindings to LLVM's C API.
